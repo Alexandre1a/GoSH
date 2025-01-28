@@ -62,7 +62,3 @@ func execInput(input string) error {
 	// Execute the command and return the error.
 	return cmd.Run()
 }
-
-func checkHistory() {
-  if _, err := os.Stat()
-}
