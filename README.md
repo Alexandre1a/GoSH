@@ -1,4 +1,4 @@
-# GoSH
+# GoSh!
 A Shell made in Go, for fun  
 ## Features
 At the moment, there isn't much features.  
