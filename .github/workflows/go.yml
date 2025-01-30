@@ -73,3 +73,13 @@ jobs:
           files: dist/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+permissions:
+  contents: write # Permet de manipuler le contenu du repo
+  issues: write # Permet de créer des issues, si nécessaire pour le release
+  pull-requests: write # Autorise la gestion des PRs
+  actions: write # Permet de gérer les workflows
+  pages: write # Si tu utilises GitHub Pages
+  discussions: write # Si tu utilises Discussions
