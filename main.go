@@ -64,7 +64,7 @@ func execInput(input string) error {
 	case "exit":
 		os.Exit(0)
 	case "version":
-		fmt.Println("GoShell Version 0.2.0")
+		fmt.Println("GoShell Version 1.0.0")
 		return nil
 	}
 
