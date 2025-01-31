@@ -1,0 +1,3 @@
+color = 'blue'
+history_size = 1000
+prompt = '[{dir}] > '
