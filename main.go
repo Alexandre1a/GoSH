@@ -4,12 +4,26 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strconv"
 	"strings"
 
 	"github.com/chzyer/readline"
+	"github.com/spf13/viper"
 )
 
+// Structure pour stocker la configuration
+type Config struct {
+	Prompt      string `mapstructure:"prompt"`
+	Color       string `mapstructure:"color"`
+	HistorySize int    `mapstructure:"history_size"`
+}
+
+var config Config
+
 func main() {
+	// Chargement de la configuration
+	loadConfig()
+
 	// Chargement de l'historique au démarrage
 	homeDir, _ := os.UserHomeDir()
 	historyFile := homeDir + "/.gosh_history"
@@ -18,7 +32,8 @@ func main() {
 	rl, err := readline.NewEx(&readline.Config{
 		Prompt:       getPrompt(), // Utilise une fonction pour générer le prompt dynamiquement
 		HistoryFile:  historyFile, // Permet de sauvegarder et charger l'historique
-		AutoComplete: nil,         // Peut être amélioré avec l'autocomplétion
+		HistoryLimit: config.HistorySize,
+		AutoComplete: nil, // Peut être amélioré avec l'autocomplétion
 	})
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Erreur readline:", err)
@@ -49,6 +64,48 @@ func main() {
 	}
 }
 
+// Charger la configuration depuis un fichier
+func loadConfig() {
+	homeDir, _ := os.UserHomeDir()
+	configPath := homeDir + "/.config/gosh/.gosh_config.toml"
+	fmt.Println("Chemin du fichier de configuration:", configPath) // Log pour déboguer
+	viper.SetConfigFile(configPath)
+
+	// Valeurs par défaut
+	viper.SetDefault("prompt", "[{dir}] > ")
+	viper.SetDefault("color", "blue")
+	viper.SetDefault("history_size", 1000)
+
+	// Lire le fichier de configuration
+	if err := viper.ReadInConfig(); err != nil {
+		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+			// Si le fichier n'existe pas, le créer avec les valeurs par défaut
+			fmt.Println("Création du fichier de configuration avec les valeurs par défaut...")
+			if err := viper.WriteConfigAs(configPath); err != nil {
+				fmt.Fprintln(os.Stderr, "Erreur lors de la création du fichier de configuration:", err)
+			} else {
+				fmt.Println("Fichier de configuration créé avec succès:", configPath)
+			}
+		} else {
+			// Autre erreur de lecture du fichier
+			fmt.Fprintln(os.Stderr, "Erreur de configuration:", err)
+			fmt.Println("Utilisation des valeurs par défaut.")
+		}
+	}
+
+	// Charger la configuration dans la structure Config
+	if err := viper.Unmarshal(&config); err != nil {
+		fmt.Fprintln(os.Stderr, "Erreur de chargement de la configuration:", err)
+		fmt.Println("Utilisation des valeurs par défaut.")
+	}
+
+	// Validation des valeurs
+	if config.HistorySize <= 0 {
+		fmt.Fprintln(os.Stderr, "Taille de l'historique invalide. Utilisation de la valeur par défaut (1000).")
+		config.HistorySize = 1000
+	}
+}
+
 // Fonction pour générer le prompt avec le répertoire courant
 func getPrompt() string {
 	wd, err := os.Getwd()
@@ -56,21 +113,29 @@ func getPrompt() string {
 		wd = "?"
 	}
 
-	// Récupérer le répertoire home de l'utilisateur
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		homeDir = "" // Si on ne peut pas obtenir le home, on ne fait pas de remplacement
-	}
-
 	// Remplacer le chemin du home par "~"
+	homeDir, _ := os.UserHomeDir()
 	if homeDir != "" && strings.HasPrefix(wd, homeDir) {
 		wd = "~" + strings.TrimPrefix(wd, homeDir)
 	}
 
-	// Séquence ANSI pour le texte en bleu (optionnel)
-	blue := "\033[34m"
-	reset := "\033[0m"
-	return fmt.Sprintf("%s[%s]%s > ", blue, wd, reset)
+	// Utiliser le prompt défini dans la configuration
+	prompt := strings.Replace(config.Prompt, "{dir}", wd, -1)
+
+	// Ajouter de la couleur si configuré
+	if config.Color == "blue" {
+		blue := "\033[34m"
+		reset := "\033[0m"
+		prompt = blue + prompt + reset
+	}
+
+	if config.Color == "green" {
+		green := "\033[32m"
+		reset := "\033[0m"
+		prompt = green + prompt + reset
+	}
+
+	return prompt
 }
 
 func execInput(input string) error {
@@ -91,8 +156,13 @@ func execInput(input string) error {
 	case "exit":
 		os.Exit(0)
 	case "version":
-		fmt.Println("GoShell Version 2.0.0")
+		fmt.Println("GoShell Version 1.0.0")
 		return nil
+	case "set":
+		if len(args) < 3 {
+			return fmt.Errorf("Usage: set <key> <value>")
+		}
+		return setConfig(args[1], strings.Join(args[2:], " "))
 	}
 
 	// Exécuter la commande système
@@ -100,4 +170,35 @@ func execInput(input string) error {
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
 	return cmd.Run()
+}
+
+// Fonction pour modifier la configuration à la volée
+func setConfig(key, value string) error {
+	switch key {
+	case "prompt":
+		viper.Set("prompt", value)
+	case "color":
+		viper.Set("color", value)
+	case "history_size":
+		intValue, err := strconv.Atoi(value)
+		if err != nil || intValue <= 0 {
+			return fmt.Errorf("history_size doit être un entier positif")
+		}
+		viper.Set("history_size", intValue)
+	default:
+		return fmt.Errorf("Clé de configuration inconnue: %s", key)
+	}
+
+	// Sauvegarder la configuration dans le fichier
+	if err := viper.WriteConfig(); err != nil {
+		return fmt.Errorf("Erreur lors de la sauvegarde de la configuration: %v", err)
+	}
+
+	// Recharger la configuration
+	if err := viper.Unmarshal(&config); err != nil {
+		return fmt.Errorf("Erreur lors du rechargement de la configuration: %v", err)
+	}
+
+	fmt.Printf("Configuration mise à jour: %s = %s\n", key, value)
+	return nil
 }
