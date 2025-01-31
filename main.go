@@ -16,7 +16,7 @@ func main() {
 
 	// Configuration du shell interactif
 	rl, err := readline.NewEx(&readline.Config{
-		Prompt:       "> ",
+		Prompt:       getPrompt(), // Utilise une fonction pour générer le prompt dynamiquement
 		HistoryFile:  historyFile, // Permet de sauvegarder et charger l'historique
 		AutoComplete: nil,         // Peut être amélioré avec l'autocomplétion
 	})
@@ -27,6 +27,9 @@ func main() {
 	defer rl.Close()
 
 	for {
+		// Mettre à jour le prompt avec le répertoire courant
+		rl.SetPrompt(getPrompt())
+
 		// Lecture de l'entrée utilisateur avec édition et historique
 		input, err := rl.Readline()
 		if err != nil { // EOF ou Ctrl+D
@@ -44,6 +47,30 @@ func main() {
 			fmt.Fprintln(os.Stderr, err)
 		}
 	}
+}
+
+// Fonction pour générer le prompt avec le répertoire courant
+func getPrompt() string {
+	wd, err := os.Getwd()
+	if err != nil {
+		wd = "?"
+	}
+
+	// Récupérer le répertoire home de l'utilisateur
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		homeDir = "" // Si on ne peut pas obtenir le home, on ne fait pas de remplacement
+	}
+
+	// Remplacer le chemin du home par "~"
+	if homeDir != "" && strings.HasPrefix(wd, homeDir) {
+		wd = "~" + strings.TrimPrefix(wd, homeDir)
+	}
+
+	// Séquence ANSI pour le texte en bleu (optionnel)
+	blue := "\033[34m"
+	reset := "\033[0m"
+	return fmt.Sprintf("%s[%s]%s > ", blue, wd, reset)
 }
 
 func execInput(input string) error {
@@ -64,7 +91,7 @@ func execInput(input string) error {
 	case "exit":
 		os.Exit(0)
 	case "version":
-		fmt.Println("GoShell Version 1.0.0")
+		fmt.Println("GoShell Version 2.0.0")
 		return nil
 	}
 
