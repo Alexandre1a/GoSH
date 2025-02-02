@@ -13,21 +13,28 @@ If not, the issue will be fixed soon (in case of a typo for example)
 ## Installation
 You can grab the binaries for your system and architecture, or build it yourself
 To build it, clone the repository, cd into it and run  
-'go build -o bin/GoSH'  
+`go build -o bin/GoSH`  
 To test the shell and see if it suits you.  
 If everything works, then move the binary to a place inside your path.  
 
-To directly install it with the Go toolchain, just use 'go intall'  
-This will build and place the binary inside your $HOME/go/bin folder.  
+To directly install it with the Go toolchain, just use  
+`go intall`  
+This will build and place the binary inside your `$HOME/go/bin` folder.  
 Add this folder to your path and you are good to go !  
 
 ## Usage
-To use the program, just invoke it with 'GoSH'  
-If you see a message about a config file, create '~/.config/gosh/gosh_config.toml' and populate it with the defaults written inside this repo.  
-To change config parameter on the fly, use the 'set' builtin.  
-Currently, 'set' has a limited amount of configuration options.  
-To change the color of the prompt use 'set color <color>'  
-You can use all "console colors", listed [https://gist.github.com/kamito/704813 | here]  
+To use the program, just invoke it with `GoSH`  
+If you see a message about a config file, create `~/.config/gosh/gosh_config.toml` and populate it with the defaults written inside this repo -> [here](/defaults.toml).  
+To change config parameter on the fly, use the `set` builtin.  
+Currently, `set` has a limited amount of configuration options and need to have a valid config file to write to.  
+To change the color of the prompt use `set color <color>`  
+You can change the history size with `set history_size <int>`  
+You can change the prompt with `set prompt <promp>`  
+Here is some exemple of prompts :  
+  - `[{dir}] > `
+  - `["Hello World"] $ `
+  - `"Hello" `  
+You can use all "console colors", listed [here](https://gist.github.com/kamito/704813)  
 
 ## Know Issues
 Currently there is a number of known or unkwown issues.  
