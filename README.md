@@ -29,3 +29,11 @@ Currently, 'set' has a limited amount of configuration options.
 To change the color of the prompt use 'set color <color>'  
 You can use all "console colors", listed [https://gist.github.com/kamito/704813 | here]  
 
+## Know Issues
+Currently there is a number of known or unkwown issues.  
+We can list the fact that interactive programs, like SSH or VIM won't work.  
+The config has to be manualy created and populated.  
+In the handling of flags and strings, the program currently cut all spaces, so no strings in flags.  
+For exemple for git commit -a -m "Some light modifications", the shell will think that "git commit -a -m 'Some'" is a command and "light" and "modifications" are other commands.  
+Also pipes aren't supported yet, so no ls | grep "thing"  
+
