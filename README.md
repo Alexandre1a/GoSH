@@ -5,6 +5,7 @@ A Shell made in Go, for fun
 - History file wich you can browse for past commands
 - Some colors
 - Config file
+- PTY support for interactive commands
 I'm planning to add more features later (like syntax hilighting, etc...).  
 I'm also learning Go by doing this project.  
 You can expect breaking changes (or code), the problem has a workaround in the commit message.  
@@ -43,4 +44,4 @@ The config has to be manualy created and populated.
 In the handling of flags and strings, the program currently cut all spaces, so no strings in flags.  
 For exemple for git commit -a -m "Some light modifications", the shell will think that "git commit -a -m 'Some'" is a command and "light" and "modifications" are other commands.  
 Also pipes aren't supported yet, so no ls | grep "thing"  
-
+PTY currently don't support signals like 'Ctrl+C' so don't use vim, nano nor nvim for exemple.  
