@@ -2,12 +2,14 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"strconv"
 	"strings"
 
 	"github.com/chzyer/readline"
+	"github.com/creack/pty"
 	"github.com/spf13/viper"
 )
 
@@ -68,7 +70,7 @@ func main() {
 func loadConfig() {
 	homeDir, _ := os.UserHomeDir()
 	configPath := homeDir + "/.config/gosh/gosh_config.toml"
-	fmt.Println("Chemin du fichier de configuration:", configPath) // Log pour déboguer
+	fmt.Println("Chemin du fichier de configuration:", configPath)
 	viper.SetConfigFile(configPath)
 
 	// Valeurs par défaut
@@ -129,12 +131,6 @@ func getPrompt() string {
 		prompt = blue + prompt + reset
 	}
 
-	if config.Color == "green" {
-		green := "\033[32m"
-		reset := "\033[0m"
-		prompt = green + prompt + reset
-	}
-
 	return prompt
 }
 
@@ -156,7 +152,7 @@ func execInput(input string) error {
 	case "exit":
 		os.Exit(0)
 	case "version":
-		fmt.Println("GoShell Version 1.0.0")
+		fmt.Println("GoShell Version 2.1.2")
 		return nil
 	case "set":
 		if len(args) < 3 {
@@ -165,11 +161,26 @@ func execInput(input string) error {
 		return setConfig(args[1], strings.Join(args[2:], " "))
 	}
 
-	// Exécuter la commande système
+	// Exécuter la commande système dans un PTY
 	cmd := exec.Command(args[0], args[1:]...)
-	cmd.Stderr = os.Stderr
-	cmd.Stdout = os.Stdout
-	return cmd.Run()
+	ptmx, err := pty.Start(cmd)
+	if err != nil {
+		return fmt.Errorf("Erreur lors du démarrage du PTY: %v", err)
+	}
+	defer ptmx.Close()
+
+	// Rediriger les entrées/sorties entre le terminal parent et le PTY
+	go func() {
+		io.Copy(ptmx, os.Stdin) // Rediriger stdin vers le PTY
+	}()
+	io.Copy(os.Stdout, ptmx) // Rediriger stdout du PTY vers le terminal
+
+	// Attendre la fin de la commande
+	if err := cmd.Wait(); err != nil {
+		return fmt.Errorf("Erreur lors de l'exécution de la commande: %v", err)
+	}
+
+	return nil
 }
 
 // Fonction pour modifier la configuration à la volée

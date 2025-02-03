@@ -4,6 +4,7 @@ go 1.23.5
 
 require (
 	github.com/chzyer/readline v1.5.1 // indirect
+	github.com/creack/pty v1.1.24 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect
