@@ -6,6 +6,7 @@ require (
 	github.com/chzyer/readline v1.5.1 // indirect
 	github.com/creack/pty v1.1.24 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
+	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect

@@ -10,6 +10,7 @@ import (
 
 	"github.com/chzyer/readline"
 	"github.com/creack/pty"
+	"github.com/google/shlex"
 	"github.com/spf13/viper"
 )
 
@@ -136,7 +137,16 @@ func getPrompt() string {
 
 func execInput(input string) error {
 	input = strings.TrimSuffix(input, "\n")
-	args := strings.Split(input, " ")
+
+	// Diviser la commande en arguments en respectant les guillemets
+	args, err := shlex.Split(input)
+	if err != nil {
+		return fmt.Errorf("Erreur lors de la division des arguments: %v", err)
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
 
 	// Gérer les commandes intégrées
 	switch args[0] {
