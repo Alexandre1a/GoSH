@@ -189,22 +189,31 @@ func execInput(input string) error {
 	cmd := exec.Command(args[0], args[1:]...)
 
 	if isInteractiveCommand(args[0]) {
+		// Utiliser un PTY pour les commandes interactives
 		ptmx, err := pty.Start(cmd)
 		if err != nil {
 			return fmt.Errorf("Erreur lors du démarrage du PTY: %v", err)
 		}
 		defer ptmx.Close()
 
+		// Rediriger stdin et stdout
 		go func() {
 			io.Copy(ptmx, os.Stdin)
 		}()
 		io.Copy(os.Stdout, ptmx)
 	} else {
+		// Exécuter directement les commandes non interactives
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 		cmd.Stdin = os.Stdin
+
+		// Démarrer la commande avant d'attendre sa fin
+		if err := cmd.Start(); err != nil {
+			return fmt.Errorf("Erreur lors du démarrage de la commande: %v", err)
+		}
 	}
 
+	// Attendre la fin du processus
 	if err := cmd.Wait(); err != nil {
 		return fmt.Errorf("Erreur lors de l'exécution de la commande: %v", err)
 	}
