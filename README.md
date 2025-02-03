@@ -29,6 +29,7 @@ To use the program, just invoke it with `GoSH`
 To change config parameter on the fly, use the `set` builtin.  
 Currently, `set` has a limited amount of configuration options and need to have a valid config file to write to.  
 To change the color of the prompt use `set color <color>`  
+All the avalable colors : black red purple cyan white green yellow blue  
 You can change the history size with `set history_size <int>`  
 You can change the prompt with `set prompt <promp>`  
 Here is some exemple of prompts :  
