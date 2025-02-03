@@ -23,6 +23,19 @@ type Config struct {
 
 var config Config
 
+// Map des couleurs ANSI
+var colors = map[string]string{
+	"black":  "\033[30m",
+	"red":    "\033[31m",
+	"green":  "\033[32m",
+	"yellow": "\033[33m",
+	"blue":   "\033[34m",
+	"purple": "\033[35m",
+	"cyan":   "\033[36m",
+	"white":  "\033[37m",
+	"reset":  "\033[0m",
+}
+
 func main() {
 	// Chargement de la configuration
 	loadConfig()
@@ -33,10 +46,10 @@ func main() {
 
 	// Configuration du shell interactif
 	rl, err := readline.NewEx(&readline.Config{
-		Prompt:       getPrompt(), // Utilise une fonction pour générer le prompt dynamiquement
-		HistoryFile:  historyFile, // Permet de sauvegarder et charger l'historique
+		Prompt:       getPrompt(),
+		HistoryFile:  historyFile,
 		HistoryLimit: config.HistorySize,
-		AutoComplete: nil, // Peut être amélioré avec l'autocomplétion
+		AutoComplete: nil,
 	})
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Erreur readline:", err)
@@ -45,22 +58,18 @@ func main() {
 	defer rl.Close()
 
 	for {
-		// Mettre à jour le prompt avec le répertoire courant
 		rl.SetPrompt(getPrompt())
 
-		// Lecture de l'entrée utilisateur avec édition et historique
 		input, err := rl.Readline()
-		if err != nil { // EOF ou Ctrl+D
+		if err != nil {
 			break
 		}
 
-		// Suppression des espaces inutiles
 		input = strings.TrimSpace(input)
 		if input == "" {
 			continue
 		}
 
-		// Exécute la commande
 		if err := execInput(input); err != nil {
 			fmt.Fprintln(os.Stderr, err)
 		}
@@ -75,7 +84,6 @@ func loadConfig() {
 	viper.AddConfigPath(configPath)
 	viper.SetConfigName("gosh_config")
 	viper.SetConfigType("toml")
-	// viper.SetConfigFile(configPath)
 
 	// Valeurs par défaut
 	viper.SetDefault("prompt", "[{dir}] > ")
@@ -85,7 +93,6 @@ func loadConfig() {
 	// Lire le fichier de configuration
 	if err := viper.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
-			// Si le fichier n'existe pas, le créer avec les valeurs par défaut
 			fmt.Println("Création du fichier de configuration avec les valeurs par défaut...")
 			if err := viper.WriteConfigAs(configPath + "gosh_config"); err != nil {
 				fmt.Fprintln(os.Stderr, "Erreur lors de la création du fichier de configuration:", err)
@@ -93,19 +100,16 @@ func loadConfig() {
 				fmt.Println("Fichier de configuration créé avec succès:", configPath)
 			}
 		} else {
-			// Autre erreur de lecture du fichier
 			fmt.Fprintln(os.Stderr, "Erreur de configuration:", err)
 			fmt.Println("Utilisation des valeurs par défaut.")
 		}
 	}
 
-	// Charger la configuration dans la structure Config
 	if err := viper.Unmarshal(&config); err != nil {
 		fmt.Fprintln(os.Stderr, "Erreur de chargement de la configuration:", err)
 		fmt.Println("Utilisation des valeurs par défaut.")
 	}
 
-	// Validation des valeurs
 	if config.HistorySize <= 0 {
 		fmt.Fprintln(os.Stderr, "Taille de l'historique invalide. Utilisation de la valeur par défaut (1000).")
 		config.HistorySize = 1000
@@ -119,34 +123,38 @@ func getPrompt() string {
 		wd = "?"
 	}
 
-	// Remplacer le chemin du home par "~"
 	homeDir, _ := os.UserHomeDir()
 	if homeDir != "" && strings.HasPrefix(wd, homeDir) {
 		wd = "~" + strings.TrimPrefix(wd, homeDir)
 	}
 
-	// Utiliser le prompt défini dans la configuration
 	prompt := strings.Replace(config.Prompt, "{dir}", wd, -1)
 
-	// Ajouter de la couleur si configuré
-	if config.Color == "blue" {
-		blue := "\033[34m"
-		reset := "\033[0m"
-		prompt = blue + prompt + reset
+	// Appliquer la couleur si elle existe dans la map
+	if colorCode, exists := colors[config.Color]; exists {
+		prompt = colorCode + prompt + colors["reset"]
 	}
 
-	if config.Color == "green" {
-		green := "\033[32m"
-		reset := "\033[0m"
-		prompt = green + prompt + reset
-	}
 	return prompt
+}
+
+// Fonction pour déterminer si une commande est interactive
+func isInteractiveCommand(cmd string) bool {
+	interactiveCommands := map[string]bool{
+		"vim":  true,
+		"nano": true,
+		"ssh":  true,
+		"top":  true,
+		"htop": true,
+		"less": true,
+		"more": true,
+	}
+	return interactiveCommands[cmd]
 }
 
 func execInput(input string) error {
 	input = strings.TrimSuffix(input, "\n")
 
-	// Diviser la commande en arguments en respectant les guillemets
 	args, err := shlex.Split(input)
 	if err != nil {
 		return fmt.Errorf("Erreur lors de la division des arguments: %v", err)
@@ -156,7 +164,6 @@ func execInput(input string) error {
 		return nil
 	}
 
-	// Gérer les commandes intégrées
 	switch args[0] {
 	case "cd":
 		if len(args) < 2 || args[1] == "" {
@@ -179,21 +186,25 @@ func execInput(input string) error {
 		return setConfig(args[1], strings.Join(args[2:], " "))
 	}
 
-	// Exécuter la commande système dans un PTY
 	cmd := exec.Command(args[0], args[1:]...)
-	ptmx, err := pty.Start(cmd)
-	if err != nil {
-		return fmt.Errorf("Erreur lors du démarrage du PTY: %v", err)
+
+	if isInteractiveCommand(args[0]) {
+		ptmx, err := pty.Start(cmd)
+		if err != nil {
+			return fmt.Errorf("Erreur lors du démarrage du PTY: %v", err)
+		}
+		defer ptmx.Close()
+
+		go func() {
+			io.Copy(ptmx, os.Stdin)
+		}()
+		io.Copy(os.Stdout, ptmx)
+	} else {
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		cmd.Stdin = os.Stdin
 	}
-	defer ptmx.Close()
 
-	// Rediriger les entrées/sorties entre le terminal parent et le PTY
-	go func() {
-		io.Copy(ptmx, os.Stdin) // Rediriger stdin vers le PTY
-	}()
-	io.Copy(os.Stdout, ptmx) // Rediriger stdout du PTY vers le terminal
-
-	// Attendre la fin de la commande
 	if err := cmd.Wait(); err != nil {
 		return fmt.Errorf("Erreur lors de l'exécution de la commande: %v", err)
 	}
@@ -207,6 +218,9 @@ func setConfig(key, value string) error {
 	case "prompt":
 		viper.Set("prompt", value)
 	case "color":
+		if _, exists := colors[value]; !exists {
+			return fmt.Errorf("Couleur inconnue: %s. Couleurs disponibles: %v", value, getAvailableColors())
+		}
 		viper.Set("color", value)
 	case "history_size":
 		intValue, err := strconv.Atoi(value)
@@ -218,16 +232,23 @@ func setConfig(key, value string) error {
 		return fmt.Errorf("Clé de configuration inconnue: %s", key)
 	}
 
-	// Sauvegarder la configuration dans le fichier
 	if err := viper.WriteConfig(); err != nil {
 		return fmt.Errorf("Erreur lors de la sauvegarde de la configuration: %v", err)
 	}
 
-	// Recharger la configuration
 	if err := viper.Unmarshal(&config); err != nil {
 		return fmt.Errorf("Erreur lors du rechargement de la configuration: %v", err)
 	}
 
 	fmt.Printf("Configuration mise à jour: %s = %s\n", key, value)
 	return nil
+}
+
+// Retourne la liste des couleurs disponibles
+func getAvailableColors() []string {
+	keys := make([]string, 0, len(colors))
+	for k := range colors {
+		keys = append(keys, k)
+	}
+	return keys
 }
