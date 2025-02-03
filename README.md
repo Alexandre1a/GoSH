@@ -39,9 +39,7 @@ You can use all "console colors", listed [here](https://gist.github.com/kamito/7
 
 ## Know Issues
 Currently there is a number of known or unkwown issues.  
-We can list the fact that interactive programs, like SSH or VIM won't work.  
+We can list the fact that interactive programs, like SSH or VIM work partialy.  
 The config has to be manualy created and populated.  
-In the handling of flags and strings, the program currently cut all spaces, so no strings in flags.  
-For exemple for git commit -a -m "Some light modifications", the shell will think that "git commit -a -m 'Some'" is a command and "light" and "modifications" are other commands.  
 Also pipes aren't supported yet, so no ls | grep "thing"  
 PTY currently don't support signals like 'Ctrl+C' so don't use vim, nano nor nvim for exemple.  
