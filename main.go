@@ -70,9 +70,12 @@ func main() {
 // Charger la configuration depuis un fichier
 func loadConfig() {
 	homeDir, _ := os.UserHomeDir()
-	configPath := homeDir + "/.config/gosh/gosh_config.toml"
+	configPath := homeDir + "/.config/gosh/"
 	fmt.Println("Chemin du fichier de configuration:", configPath)
-	viper.SetConfigFile(configPath)
+	viper.AddConfigPath(configPath)
+	viper.SetConfigName("gosh_config")
+	viper.SetConfigType("toml")
+	// viper.SetConfigFile(configPath)
 
 	// Valeurs par défaut
 	viper.SetDefault("prompt", "[{dir}] > ")
@@ -84,7 +87,7 @@ func loadConfig() {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
 			// Si le fichier n'existe pas, le créer avec les valeurs par défaut
 			fmt.Println("Création du fichier de configuration avec les valeurs par défaut...")
-			if err := viper.WriteConfigAs(configPath); err != nil {
+			if err := viper.WriteConfigAs(configPath + "gosh_config"); err != nil {
 				fmt.Fprintln(os.Stderr, "Erreur lors de la création du fichier de configuration:", err)
 			} else {
 				fmt.Println("Fichier de configuration créé avec succès:", configPath)
@@ -132,6 +135,11 @@ func getPrompt() string {
 		prompt = blue + prompt + reset
 	}
 
+	if config.Color == "green" {
+		green := "\033[32m"
+		reset := "\033[0m"
+		prompt = green + prompt + reset
+	}
 	return prompt
 }
 
