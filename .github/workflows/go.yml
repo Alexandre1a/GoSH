@@ -42,6 +42,10 @@ jobs:
           GOOS=linux GOARCH=amd64 go build -o dist/gosh-linux-amd64
           GOOS=linux GOARCH=arm64 go build -o dist/gosh-linux-arm64
 
+          # Windows
+          GOOS=windows GOARCH=amd64 go build -o dist/gosh-windows-amd64.exe
+          GOOS=windows GOARCH=arm64 go build -o dist/gosh-windows-arm64.exe
+
           # macOS
           GOOS=darwin GOARCH=amd64 go build -o dist/gosh-mac-amd64
           GOOS=darwin GOARCH=arm64 go build -o dist/gosh-mac-arm64
