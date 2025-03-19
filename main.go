@@ -86,8 +86,8 @@ func loadConfig() {
 	viper.SetConfigType("toml")
 
 	// Valeurs par défaut
-	viper.SetDefault("prompt", "[{dir}] > ")
-	viper.SetDefault("color", "blue")
+	viper.SetDefault("prompt", "[{dir}] $ ")
+	viper.SetDefault("color", "green")
 	viper.SetDefault("history_size", 1000)
 
 	// Lire le fichier de configuration
