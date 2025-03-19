@@ -37,7 +37,8 @@ All the avalable colors :
   - white
   - green
   - yellow
-  - blue  
+  - blue   
+
 You can change the history size with `set history_size <int>`  
 You can change the prompt with `set prompt <promp>`  
 Here is some exemple of prompts :  
