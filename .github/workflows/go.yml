@@ -38,7 +38,6 @@ jobs:
         run: |
           mkdir -p dist
           # Linux
-          GOOS=linux GOARCH=amd64 go build -o dist/gosh-linux-amd64
           GOOS=linux GOARCH=arm64 go build -o dist/gosh-linux-arm64
           # macOS
           GOOS=darwin GOARCH=amd64 go build -o dist/gosh-mac-amd64
