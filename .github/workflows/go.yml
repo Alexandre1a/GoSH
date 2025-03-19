@@ -37,20 +37,19 @@ jobs:
       - name: Build binaries for multiple architectures
         run: |
           mkdir -p dist
-
-        # Linux
+          # Linux
           GOOS=linux GOARCH=amd64 go build -o dist/gosh-linux-amd64
           GOOS=linux GOARCH=arm64 go build -o dist/gosh-linux-arm64
+          # macOS
+          GOOS=darwin GOARCH=amd64 go build -o dist/gosh-mac-amd64
+          GOOS=darwin GOARCH=arm64 go build -o dist/gosh-mac-arm64
+          
+          ls -lh dist/
 
         # Windows
         #  GOOS=windows GOARCH=amd64 go build -o dist/gosh-windows-amd64.exe
         # GOOS=windows GOARCH=arm64 go build -o dist/gosh-windows-arm64.exe
 
-        # macOS
-          GOOS=darwin GOARCH=amd64 go build -o dist/gosh-mac-amd64
-          GOOS=darwin GOARCH=arm64 go build -o dist/gosh-mac-arm64
-
-          ls -lh dist/
 
       - name: Upload binaries as artifacts
         uses: actions/upload-artifact@v4
@@ -70,6 +69,39 @@ jobs:
         with:
           name: gosh-binaries
           path: dist/
+
+      - name: Generate Changelog
+        id: changelog
+        run: |
+          CURRENT_TAG=${GITHUB_REF#refs/tags/}
+          # Get all tags sorted by version (descending)
+          ALL_TAGS=$(git tag --sort=-version:refname)
+          PREVIOUS_TAG=""
+          found_current=0
+          # Find the tag immediately before the current one
+          for tag in $ALL_TAGS; do
+            if [ "$found_current" -eq 1 ]; then
+              PREVIOUS_TAG=$tag
+              break
+            fi
+            if [ "$tag" == "$CURRENT_TAG" ]; then
+              found_current=1
+            fi
+          done
+          # Fallback to initial commit if no previous tag
+          if [ -z "$PREVIOUS_TAG" ]; then
+            PREVIOUS_TAG=$(git rev-list --max-parents=0 HEAD)
+          fi
+          # Generate changelog
+          CHANGELOG=$(git log --pretty=format:"- %s (%h)" $PREVIOUS_TAG..$CURRENT_TAG)
+          if [ -z "$CHANGELOG" ]; then
+            CHANGELOG="No changes since previous release."
+          fi
+          # Output for GitHub Action
+          echo "CHANGELOG<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGELOG" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
