@@ -1,0 +1,27 @@
+name: gosh
+version: 0.1.0
+language: go
+go_version: "1.20+"
+
+build:
+  commands:
+    - go build -o gosh .
+    
+install:
+  files:
+    - src: gosh
+      dest: $BIN_DIR/gosh
+  permissions:
+    - path: $BIN_DIR/gosh
+      mode: 0755
+
+dependencies:
+  build:
+    - git
+    - golang >= 1.20
+  runtime: []
+
+tests:
+  - command: ./gosh --version
+    output: "gosh 0.1.0"
+
