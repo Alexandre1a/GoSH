@@ -79,8 +79,14 @@ func main() {
 // Charger la configuration depuis un fichier
 func loadConfig() {
 	homeDir, _ := os.UserHomeDir()
+
 	configPath := homeDir + "/.config/gosh/"
 	fmt.Println("Chemin du fichier de configuration:", configPath)
+
+	if err := os.MkdirAll(configPath, 0755); err != nil {
+		fmt.Fprintln(os.Stderr, "Erreur lors de la création du dossier de configuration:", err)
+	}
+
 	viper.AddConfigPath(configPath)
 	viper.SetConfigName("gosh_config")
 	viper.SetConfigType("toml")
