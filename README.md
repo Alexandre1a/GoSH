@@ -53,3 +53,6 @@ We can list the fact that interactive programs, like SSH or VIM work partialy.
 The config has to be manualy created and populated.  
 Also pipes aren't supported yet, so no `ls | grep "thing"`  
 PTY currently don't support signals like 'Ctrl+C' so don't use vim, nano nor nvim for exemple.  
+
+## ToDo
+- Tab completion (for cd)

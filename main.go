@@ -28,7 +28,7 @@ type Config struct {
 
 // Constantes pour la version et le nom du shell
 const (
-	VERSION    = "2.2.0"
+	VERSION    = "2.3.0"
 	SHELL_NAME = "GoShell"
 )
 
