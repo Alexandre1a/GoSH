@@ -27,12 +27,11 @@ jobs:
           # macOS
           GOOS=darwin GOARCH=amd64 go build -o dist/gosh-darwin-amd64
           GOOS=darwin GOARCH=arm64 go build -o dist/gosh-darwin-arm64
+          # Windows
+          GOOS=windows GOARCH=amd64 go build -o dist/gosh-windows-amd64.exe
+          GOOS=windows GOARCH=arm64 go build -o dist/gosh-windows-arm64.exe
           
           ls -lh dist/
-
-        # Windows
-        #  GOOS=windows GOARCH=amd64 go build -o dist/gosh-windows-amd64.exe
-        # GOOS=windows GOARCH=arm64 go build -o dist/gosh-windows-arm64.exe
 
 
       - name: Upload binaries as artifacts
